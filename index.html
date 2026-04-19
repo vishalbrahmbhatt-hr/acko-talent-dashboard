@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Acko Talent Density Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0F1F3D;
+    --orange: #E8734A;
+    --blue: #378ADD;
+    --green: #1D9E75;
+    --red: #E24B4A;
+    --amber: #BA7517;
+    --gray: #888780;
+    --bg: #F7F7F5;
+    --surface: #FFFFFF;
+    --surface2: #F1F0EC;
+    --border: rgba(0,0,0,0.10);
+    --border2: rgba(0,0,0,0.16);
+    --text: #1A1A1A;
+    --text2: #555555;
+    --text3: #888888;
+    --success-bg: #EAF3DE;
+    --success-text: #3B6D11;
+    --warning-bg: #FAEEDA;
+    --warning-text: #854F0B;
+    --danger-bg: #FCEBEB;
+    --danger-text: #A32D2D;
+    --info-bg: #E6F1FB;
+    --info-text: #185FA5;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .topnav {
+    background: var(--navy);
+    padding: 0 2rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topnav-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .topnav-logo {
+    width: 28px;
+    height: 28px;
+    background: var(--orange);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .topnav-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #C8D8F0;
+  }
+  .topnav-meta {
+    font-size: 12px;
+    color: #4E6E9E;
+  }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+  .dash-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+  .dash-header-left h1 { font-size: 22px; font-weight: 600; color: var(--text); }
+  .dash-header-left p { font-size: 13px; color: var(--text3); margin-top: 3px; }
+  .filter-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .fbtn {
+    font-size: 12px; padding: 6px 14px;
+    border-radius: var(--radius); border: 1px solid var(--border2);
+    background: var(--surface); color: var(--text2);
+    cursor: pointer; transition: all 0.15s;
+    font-family: inherit;
+  }
+  .fbtn:hover { border-color: var(--navy); color: var(--navy); }
+  .fbtn.active { background: var(--navy); border-color: var(--navy); color: #fff; font-weight: 500; }
+
+  .summary-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1.25rem; }
+  .scard { background: var(--surface2); border-radius: var(--radius); padding: 14px 16px; }
+  .scard-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .scard-val { font-size: 26px; font-weight: 600; color: var(--text); line-height: 1; }
+  .scard-sub { font-size: 12px; margin-top: 6px; }
+  .up { color: var(--success-text); } .down { color: var(--danger-text); } .flat { color: var(--text3); }
+
+  .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem;
+  }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .card-sub { font-size: 12px; color: var(--text3); margin-bottom: 1rem; }
+
+  .matrix-canvas { width: 100%; height: 280px; display: block; cursor: crosshair; }
+
+  .legend { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; }
+  .leg { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+  .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  .role-list { display: flex; flex-direction: column; }
+  .role-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.1s;
+    border-radius: 0;
+  }
+  .role-row:last-child { border-bottom: none; }
+  .role-row:hover { background: var(--surface2); margin: 0 -1.25rem; padding: 8px 1.25rem; }
+  .role-row.selected { background: var(--info-bg); margin: 0 -1.25rem; padding: 8px 1.25rem; }
+  .rdot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .rname { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rfn { font-size: 11px; color: var(--text3); }
+  .rbars { display: flex; flex-direction: column; gap: 4px; width: 90px; flex-shrink: 0; }
+  .mini-row { display: flex; align-items: center; gap: 4px; }
+  .mini-lbl { font-size: 10px; color: var(--text3); width: 10px; }
+  .mini-track { flex: 1; height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .mini-fill { height: 100%; border-radius: 2px; }
+  .rtraj { font-size: 14px; width: 16px; text-align: center; flex-shrink: 0; }
+  .rstatus { font-size: 11px; font-weight: 500; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; white-space: nowrap; }
+  .s-high { background: var(--success-bg); color: var(--success-text); }
+  .s-mid  { background: var(--warning-bg); color: var(--warning-text); }
+  .s-low  { background: var(--danger-bg);  color: var(--danger-text); }
+
+  .detail-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 12px;
+    border-left: 3px solid var(--orange);
+  }
+  .dp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .dp-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .dp-fn { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .dp-close { font-size: 20px; color: var(--text3); cursor: pointer; line-height: 1; padding: 0 4px; background: none; border: none; font-family: inherit; }
+  .dp-close:hover { color: var(--text); }
+  .dp-metrics { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+  .dp-m { background: var(--surface2); border-radius: var(--radius); padding: 12px 14px; }
+  .dp-m-label { font-size: 11px; color: var(--text3); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .dp-m-val { font-size: 22px; font-weight: 600; color: var(--text); }
+  .dp-m-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+  .dp-insight { font-size: 13.5px; color: var(--text2); line-height: 1.7; padding: 12px 14px; background: var(--surface2); border-radius: var(--radius); margin-bottom: 1rem; }
+  .dp-insight strong { font-weight: 600; color: var(--text); }
+  .dp-action-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .dp-action { display: inline-block; font-size: 12px; font-weight: 500; padding: 7px 14px; border-radius: var(--radius); border: 1px solid var(--border2); background: var(--surface); color: var(--text2); cursor: pointer; margin-right: 8px; margin-bottom: 6px; font-family: inherit; transition: all 0.15s; }
+  .dp-action:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  .bar-card { margin-bottom: 12px; }
+  .bar-canvas { width: 100%; height: 120px; display: block; }
+  .bar-axis { display: flex; justify-content: space-between; padding: 0 6px; margin-top: 3px; }
+  .bar-axis span { font-size: 10px; color: var(--text3); }
+  .bar-legend { display: flex; gap: 16px; margin-top: 8px; }
+
+  .tooltip {
+    position: fixed; background: var(--navy); color: #fff;
+    font-size: 12px; padding: 6px 10px; border-radius: 6px;
+    pointer-events: none; white-space: nowrap; z-index: 999;
+    display: none;
+  }
+
+  @media (max-width: 700px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .summary-row { grid-template-columns: repeat(2, 1fr); }
+    .dp-metrics { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="topnav-brand">
+    <div class="topnav-logo">A</div>
+    <span class="topnav-title">Acko · Talent Density</span>
+  </div>
+  <span class="topnav-meta">CEO + CHRO view · Q3 2025</span>
+</nav>
+
+<div class="page">
+  <div class="dash-header">
+    <div class="dash-header-left">
+      <h1>Talent density</h1>
+      <p id="sub-label">Critical roles · 14 roles tracked</p>
+    </div>
+    <div class="filter-row">
+      <button class="fbtn active" onclick="setFilter('all',this)">All functions</button>
+      <button class="fbtn" onclick="setFilter('eng',this)">Engineering</button>
+      <button class="fbtn" onclick="setFilter('product',this)">Product</button>
+      <button class="fbtn" onclick="setFilter('ops',this)">Ops / Claims / CX</button>
+    </div>
+  </div>
+
+  <div class="summary-row">
+    <div class="scard"><div class="scard-label">High-density roles</div><div class="scard-val" id="s-high">—</div><div class="scard-sub up" id="s-high-sub"></div></div>
+    <div class="scard"><div class="scard-label">Needs intervention</div><div class="scard-val" id="s-low">—</div><div class="scard-sub down" id="s-low-sub"></div></div>
+    <div class="scard"><div class="scard-label">Avg judgment depth</div><div class="scard-val" id="s-jd">—</div><div class="scard-sub up" id="s-jd-sub"></div></div>
+    <div class="scard"><div class="scard-label">Avg AI leverage</div><div class="scard-val" id="s-ai">—</div><div class="scard-sub flat" id="s-ai-sub"></div></div>
+  </div>
+
+  <div id="detail-panel" style="display:none"></div>
+
+  <div class="main-grid">
+    <div class="card">
+      <div class="card-title">Judgment depth vs. AI leverage</div>
+      <div class="card-sub">Each dot = one critical role. Click to inspect.</div>
+      <canvas class="matrix-canvas" id="matrix"></canvas>
+      <div class="legend">
+        <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>High density</div>
+        <div class="leg"><div class="leg-dot" style="background:#BA7517"></div>Developing</div>
+        <div class="leg"><div class="leg-dot" style="background:#E24B4A"></div>Needs intervention</div>
+        <div class="leg"><div class="leg-dot" style="background:#888780"></div>Vacant</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Critical roles · ranked by density</div>
+      <div class="card-sub">J = judgment &nbsp;·&nbsp; A = AI leverage &nbsp;·&nbsp; trajectory</div>
+      <div class="role-list" id="role-list"></div>
+    </div>
+  </div>
+
+  <div class="card bar-card">
+    <div class="card-title">Function-level density</div>
+    <div class="card-sub">Average judgment + AI leverage score across critical roles per function</div>
+    <canvas class="bar-canvas" id="bar-chart"></canvas>
+    <div class="bar-axis"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span></div>
+    <div class="bar-legend">
+      <div class="leg"><div class="leg-dot" style="background:#378ADD"></div>Judgment depth</div>
+      <div class="leg"><div class="leg-dot" style="background:#1D9E75"></div>AI leverage</div>
+    </div>
+  </div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const ROLES = [
+  { id:1,  name:"Head of Claims Intelligence", fn:"Claims",       fnKey:"ops",     j:8.2, a:7.5, traj:"up",   prev:{j:7.0,a:6.0}, insight:"Strong interrogator of model outputs. Beginning to redesign exception logic. AI leverage still early stage — mostly using AI for reporting, not yet decision architecture.", action:"Expand scope to own adjudication rule design fully." },
+  { id:2,  name:"Senior Pricing Actuary",       fn:"Pricing",      fnKey:"ops",     j:7.8, a:5.2, traj:"up",   prev:{j:6.5,a:4.5}, insight:"Judgment depth strong — consistently reframes risk hypotheses. AI leverage is the constraint: still running models manually rather than directing AI simulation pipelines.", action:"Pair with AI Systems team to rebuild workflow." },
+  { id:3,  name:"Head of CX",                   fn:"CX",           fnKey:"ops",     j:5.5, a:4.0, traj:"flat", prev:{j:5.4,a:4.1}, insight:"Operating in execution mode. Strong operationally but not yet designing human-AI experience architecture. Role definition may need resetting before talent assessment is meaningful.", action:"Clarify role scope — execution vs. architecture." },
+  { id:4,  name:"Growth PM — Health",           fn:"Product",      fnKey:"product", j:8.5, a:8.0, traj:"up",   prev:{j:7.0,a:6.5}, insight:"Highest-density role this quarter. Reframing growth hypotheses weekly, running AI-assisted validation in under 72 hours. Clear multiplier effect on pod.", action:"Candidate for pilot block lead." },
+  { id:5,  name:"Engineering Lead — AI Systems",fn:"Engineering",  fnKey:"eng",     j:7.0, a:9.2, traj:"up",   prev:{j:6.0,a:8.0}, insight:"Exceptional AI leverage — architecture standards now governing 3 pods. Judgment depth developing: strong on technical decisions, still building cross-functional system thinking.", action:"Mentor pairing recommended for system thinking." },
+  { id:6,  name:"Head of Underwriting",         fn:"Underwriting", fnKey:"ops",     j:6.0, a:3.5, traj:"down", prev:{j:6.5,a:4.0}, insight:"Regression this quarter. AI utilisation has dropped — reversion to manual model review cycles. Judgment depth solid but not applied to AI workflow redesign.", action:"Direct conversation needed. Risk of misalignment." },
+  { id:7,  name:"VP Product",                   fn:"Product",      fnKey:"product", j:7.5, a:6.5, traj:"up",   prev:{j:6.5,a:5.5}, insight:"Improving trajectory. Starting to operate as system thinker across blocks. AI leverage growing — now directing AI for product hypothesis testing, not just drafting.", action:"On track. No intervention needed." },
+  { id:8,  name:"Analytics Lead",               fn:"Data & Analytics",fnKey:"eng",  j:6.8, a:7.2, traj:"flat", prev:{j:6.7,a:7.1}, insight:"Good AI leverage — using AI-native workflows for analysis. Judgment depth is the gap: tends to answer the question given rather than reframe it.", action:"Stretch assignment: lead a problem-framing sprint." },
+  { id:9,  name:"Claims Ops Lead",              fn:"Claims",       fnKey:"ops",     j:4.2, a:3.0, traj:"down", prev:{j:5.0,a:3.5}, insight:"Execution-oriented role holder in a role that now requires system design. Trajectory declining. May be a role definition problem as much as a talent problem.", action:"Role redesign + honest talent conversation." },
+  { id:10, name:"Growth PM — Auto",             fn:"Product",      fnKey:"product", j:6.5, a:6.0, traj:"up",   prev:{j:5.5,a:5.0}, insight:"Good improvement momentum. Beginning to challenge briefs rather than accept them. AI usage is functional but not yet multiplying team output.", action:"Give ownership of a full pod sprint." },
+  { id:11, name:"Head of Finance",              fn:"Finance",      fnKey:"ops",     j:7.2, a:4.8, traj:"flat", prev:{j:7.0,a:4.9}, insight:"Strong financial judgment. AI leverage is the clear gap — finance workflows remain largely manual. No evidence of AI-first redesign thinking.", action:"Finance AI workflow audit recommended." },
+  { id:12, name:"ML Engineer — Pricing",        fn:"Engineering",  fnKey:"eng",     j:5.8, a:8.8, traj:"up",   prev:{j:5.0,a:7.5}, insight:"Very high AI leverage — building model pipelines others rely on. Judgment depth developing: beginning to question model objectives, not just optimise within them.", action:"Strong candidate for senior IC track." },
+  { id:13, name:"Design Lead",                  fn:"Design",       fnKey:"product", j:6.2, a:4.5, traj:"flat", prev:{j:6.0,a:4.4}, insight:"Judgment adequate. AI leverage significantly below potential — design process still largely manual. Conversational UX design capability is a gap.", action:"AI-native design tools onboarding needed." },
+  { id:14, name:"Head of Network Strategy",     fn:"Claims",       fnKey:"ops",     j:0,   a:0,   traj:"tbh",  prev:{j:0,a:0},     insight:"Role is vacant. Critical for claims intelligence pod. Delay is creating a gap in the network optimisation block.", action:"Prioritise hire. Define new-profile JD first." },
+];
+
+function dotColor(j,a,traj) {
+  if(traj==="tbh") return "#888780";
+  const avg=(j+a)/2;
+  if(avg>=7) return "#1D9E75";
+  if(avg>=5) return "#BA7517";
+  return "#E24B4A";
+}
+function statusCls(j,a,traj) {
+  if(traj==="tbh") return "s-low";
+  const avg=(j+a)/2;
+  if(avg>=7) return "s-high";
+  if(avg>=5) return "s-mid";
+  return "s-low";
+}
+function statusLbl(j,a,traj) {
+  if(traj==="tbh") return "Vacant";
+  const avg=(j+a)/2;
+  if(avg>=7) return "High";
+  if(avg>=5) return "Mid";
+  return "Low";
+}
+function trajSym(t) { return t==="up"?"↑":t==="down"?"↓":t==="flat"?"→":"○"; }
+function trajCol(t) { return t==="up"?"#3B6D11":t==="down"?"#A32D2D":"#888780"; }
+
+let currentFilter = "all";
+let selectedId = null;
+
+function filtered() {
+  if(currentFilter==="all") return ROLES;
+  return ROLES.filter(r=>r.fnKey===currentFilter);
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll(".fbtn").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  selectedId = null;
+  document.getElementById("detail-panel").style.display = "none";
+  renderAll();
+}
+
+function updateSummary() {
+  const roles = filtered().filter(r=>r.traj!=="tbh");
+  const high = roles.filter(r=>(r.j+r.a)/2>=7).length;
+  const low  = roles.filter(r=>(r.j+r.a)/2<5).length;
+  const avgJ = roles.length ? (roles.reduce((s,r)=>s+r.j,0)/roles.length).toFixed(1) : "—";
+  const avgA = roles.length ? (roles.reduce((s,r)=>s+r.a,0)/roles.length).toFixed(1) : "—";
+  document.getElementById("s-high").textContent = high;
+  document.getElementById("s-low").textContent  = low;
+  document.getElementById("s-jd").textContent   = avgJ;
+  document.getElementById("s-ai").textContent   = avgA;
+  document.getElementById("s-high-sub").textContent = "+2 vs last quarter";
+  document.getElementById("s-low-sub").textContent  = "1 new this quarter";
+  document.getElementById("s-jd-sub").textContent   = "+0.6 vs last quarter";
+  document.getElementById("s-ai-sub").textContent   = "Flat vs last quarter";
+  const total = filtered().length;
+  document.getElementById("sub-label").textContent = `Critical roles · ${total} roles tracked`;
+}
+
+function renderRoleList() {
+  const roles = [...filtered()].sort((a,b)=>((b.j+b.a)-(a.j+a.a)));
+  const el = document.getElementById("role-list");
+  el.innerHTML = roles.map(r=>`
+    <div class="role-row${selectedId===r.id?" selected":""}" onclick="selectRole(${r.id})">
+      <div class="rdot" style="background:${dotColor(r.j,r.a,r.traj)}"></div>
+      <div style="flex:1;min-width:0">
+        <div class="rname">${r.name}</div>
+        <div class="rfn">${r.fn}</div>
+      </div>
+      <div class="rbars">
+        <div class="mini-row"><span class="mini-lbl">J</span><div class="mini-track"><div class="mini-fill" style="width:${Math.round(r.j*10)}%;background:#378ADD"></div></div></div>
+        <div class="mini-row"><span class="mini-lbl">A</span><div class="mini-track"><div class="mini-fill" style="width:${Math.round(r.a*10)}%;background:#1D9E75"></div></div></div>
+      </div>
+      <div class="rtraj" style="color:${trajCol(r.traj)}">${trajSym(r.traj)}</div>
+      <div class="rstatus ${statusCls(r.j,r.a,r.traj)}">${statusLbl(r.j,r.a,r.traj)}</div>
+    </div>
+  `).join("");
+}
+
+function selectRole(id) {
+  selectedId = id;
+  const r = ROLES.find(x=>x.id===id);
+  const avg  = r.traj==="tbh" ? "—" : ((r.j+r.a)/2).toFixed(1);
+  const prevAvg = r.traj==="tbh" ? null : ((r.prev.j+r.prev.a)/2);
+  const delta = prevAvg!==null ? (((r.j+r.a)/2)-prevAvg).toFixed(1) : null;
+  const deltaStr = delta===null ? "—" : (parseFloat(delta)>=0 ? `+${delta} this quarter` : `${delta} this quarter`);
+  const deltaCol = delta===null ? "#888" : parseFloat(delta)>=0 ? "#3B6D11" : "#A32D2D";
+
+  const panel = document.getElementById("detail-panel");
+  panel.style.display = "block";
+  panel.innerHTML = `
+    <div class="detail-panel">
+      <div class="dp-header">
+        <div>
+          <div class="dp-title">${r.name}</div>
+          <div class="dp-fn">${r.fn} &nbsp;·&nbsp; ${r.traj==="tbh"?"Vacant — open role":"Active role"}</div>
+        </div>
+        <button class="dp-close" onclick="closeDetail()">×</button>
+      </div>
+      <div class="dp-metrics">
+        <div class="dp-m">
+          <div class="dp-m-label">Judgment depth</div>
+          <div class="dp-m-val" style="color:#378ADD">${r.traj==="tbh"?"—":r.j.toFixed(1)}</div>
+          <div class="dp-m-sub">vs ${r.traj==="tbh"?"—":r.prev.j.toFixed(1)} last quarter</div>
+        </div>
+        <div class="dp-m">
+          <div class="dp-m-label">AI leverage</div>
+          <div class="dp-m-val" style="color:#1D9E75">${r.traj==="tbh"?"—":r.a.toFixed(1)}</div>
+          <div class="dp-m-sub">vs ${r.traj==="tbh"?"—":r.prev.a.toFixed(1)} last quarter</div>
+        </div>
+        <div class="dp-m">
+          <div class="dp-m-label">Density score</div>
+          <div class="dp-m-val">${avg}</div>
+          <div class="dp-m-sub" style="color:${deltaCol}">${deltaStr}</div>
+        </div>
+        <div class="dp-m">
+          <div class="dp-m-label">Trajectory</div>
+          <div class="dp-m-val" style="color:${trajCol(r.traj)}">${trajSym(r.traj)} ${r.traj==="tbh"?"Vacant":r.traj.charAt(0).toUpperCase()+r.traj.slice(1)}</div>
+          <div class="dp-m-sub">3-month trend</div>
+        </div>
+      </div>
+      <div class="dp-insight"><strong>Read:</strong> ${r.insight}</div>
+      <div class="dp-action-label">Recommended action</div>
+      <div style="font-size:13.5px;color:#444;line-height:1.6;margin-bottom:1rem;padding:10px 14px;background:#FAEEDA;border-radius:8px;color:#854F0B;">${r.action}</div>
+    </div>
+  `;
+  renderRoleList();
+  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function closeDetail() {
+  selectedId = null;
+  document.getElementById("detail-panel").style.display = "none";
+  renderRoleList();
+}
+
+function drawMatrix() {
+  const canvas = document.getElementById("matrix");
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 280;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  canvas.style.width = W + "px"; canvas.style.height = H + "px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  const pad = { t:20, r:20, b:32, l:32 };
+  const pw = W - pad.l - pad.r;
+  const ph = H - pad.t - pad.b;
+
+  ctx.strokeStyle = "rgba(0,0,0,0.07)";
+  ctx.lineWidth = 0.5;
+  for(let i=0;i<=10;i+=2) {
+    const x = pad.l+(i/10)*pw, y = pad.t+(1-i/10)*ph;
+    ctx.beginPath(); ctx.moveTo(x,pad.t); ctx.lineTo(x,pad.t+ph); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(pad.l+pw,y); ctx.stroke();
+  }
+
+  ctx.fillStyle = "rgba(29,158,117,0.05)";
+  ctx.fillRect(pad.l+pw*0.5, pad.t, pw*0.5, ph*0.5);
+  ctx.fillStyle = "rgba(226,75,74,0.04)";
+  ctx.fillRect(pad.l, pad.t+ph*0.5, pw*0.5, ph*0.5);
+
+  ctx.strokeStyle = "rgba(0,0,0,0.1)";
+  ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(pad.l+pw*0.5,pad.t); ctx.lineTo(pad.l+pw*0.5,pad.t+ph); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(pad.l,pad.t+ph*0.5); ctx.lineTo(pad.l+pw,pad.t+ph*0.5); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.font = "10px -apple-system,sans-serif"; ctx.textAlign = "center";
+  [0,2,4,6,8,10].forEach((v,i)=>ctx.fillText(v, pad.l+(i*2/10)*pw, pad.t+ph+16));
+  ctx.textAlign = "right";
+  [0,2,4,6,8,10].forEach((v,i)=>ctx.fillText(v, pad.l-5, pad.t+ph-(i*2/10)*ph+3));
+  ctx.fillText("judgment depth →", pad.l+pw/2, pad.t+ph+28);
+  ctx.save(); ctx.translate(11,pad.t+ph/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText("AI leverage →",0,0); ctx.restore();
+
+  const roles = filtered();
+  roles.forEach(r => {
+    if(r.traj==="tbh") return;
+    const x = pad.l+(r.j/10)*pw;
+    const y = pad.t+(1-r.a/10)*ph;
+    const color = dotColor(r.j,r.a,r.traj);
+    const isSel = r.id===selectedId;
+
+    ctx.beginPath(); ctx.arc(x,y,isSel?10:8,0,Math.PI*2);
+    ctx.fillStyle = color; ctx.globalAlpha = 0.12; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = color; ctx.lineWidth = isSel?2:1.5; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x,y,isSel?4.5:3.5,0,Math.PI*2);
+    ctx.fillStyle = color; ctx.fill();
+  });
+
+  canvas.onmousemove = function(e) {
+    const bnd = canvas.getBoundingClientRect();
+    const mx = e.clientX - bnd.left, my = e.clientY - bnd.top;
+    let hit = null, minD = 18;
+    filtered().forEach(r => {
+      if(r.traj==="tbh") return;
+      const cx=pad.l+(r.j/10)*pw, cy=pad.t+(1-r.a/10)*ph;
+      const d=Math.hypot(mx-cx,my-cy);
+      if(d<minD){minD=d;hit=r;}
+    });
+    const tip = document.getElementById("tooltip");
+    if(hit) {
+      tip.style.display = "block";
+      tip.style.left = (e.clientX+12)+"px";
+      tip.style.top  = (e.clientY-8)+"px";
+      tip.textContent = `${hit.name} · J:${hit.j} A:${hit.a}`;
+      canvas.style.cursor = "pointer";
+    } else {
+      tip.style.display = "none";
+      canvas.style.cursor = "crosshair";
+    }
+  };
+  canvas.onmouseleave = () => { document.getElementById("tooltip").style.display="none"; };
+  canvas.onclick = function(e) {
+    const bnd = canvas.getBoundingClientRect();
+    const mx = e.clientX - bnd.left, my = e.clientY - bnd.top;
+    let hit = null, minD = 18;
+    filtered().forEach(r => {
+      if(r.traj==="tbh") return;
+      const cx=pad.l+(r.j/10)*pw, cy=pad.t+(1-r.a/10)*ph;
+      const d=Math.hypot(mx-cx,my-cy);
+      if(d<minD){minD=d;hit=r;}
+    });
+    if(hit) selectRole(hit.id);
+  };
+}
+
+function drawBar() {
+  const canvas = document.getElementById("bar-chart");
+  const W = canvas.parentElement.clientWidth - 40;
+  const H = 120;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = W*dpr; canvas.height = H*dpr;
+  canvas.style.width = W+"px"; canvas.style.height = H+"px";
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr,dpr);
+
+  const fns = [
+    { label:"Engineering",       roles: ROLES.filter(r=>r.fnKey==="eng"     && r.traj!=="tbh") },
+    { label:"Product",           roles: ROLES.filter(r=>r.fnKey==="product" && r.traj!=="tbh") },
+    { label:"Ops / Claims / CX", roles: ROLES.filter(r=>r.fnKey==="ops"     && r.traj!=="tbh") },
+  ];
+
+  const pad = { t:8, r:16, b:8, l:130 };
+  const pw = W - pad.l - pad.r;
+  const rowH = (H - pad.t - pad.b) / fns.length;
+
+  fns.forEach((fn,i)=>{
+    if(!fn.roles.length) return;
+    const avgJ = fn.roles.reduce((s,r)=>s+r.j,0)/fn.roles.length;
+    const avgA = fn.roles.reduce((s,r)=>s+r.a,0)/fn.roles.length;
+    const y = pad.t + i*rowH;
+    const barH = rowH*0.28, gap = rowH*0.08;
+
+    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.font = "11px -apple-system,sans-serif"; ctx.textAlign = "right";
+    ctx.fillText(fn.label, pad.l-10, y+rowH*0.45);
+
+    ctx.fillStyle = "#378ADD"; ctx.globalAlpha = 0.75;
+    ctx.fillRect(pad.l, y+rowH*0.08, (avgJ/10)*pw, barH);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#1D9E75"; ctx.globalAlpha = 0.75;
+    ctx.fillRect(pad.l, y+rowH*0.08+barH+gap, (avgA/10)*pw, barH);
+    ctx.globalAlpha = 1;
+
+    ctx.font = "10px -apple-system,sans-serif"; ctx.textAlign = "left";
+    ctx.fillStyle = "#185FA5"; ctx.fillText(avgJ.toFixed(1), pad.l+(avgJ/10)*pw+5, y+rowH*0.08+barH-1);
+    ctx.fillStyle = "#0F6E56"; ctx.fillText(avgA.toFixed(1), pad.l+(avgA/10)*pw+5, y+rowH*0.08+barH*2+gap-1);
+  });
+}
+
+function renderAll() {
+  updateSummary();
+  renderRoleList();
+  drawMatrix();
+  drawBar();
+}
+
+window.setFilter  = setFilter;
+window.selectRole = selectRole;
+window.closeDetail = closeDetail;
+
+window.addEventListener("load", renderAll);
+window.addEventListener("resize", ()=>{ drawMatrix(); drawBar(); });
+</script>
+</body>
+</html>
