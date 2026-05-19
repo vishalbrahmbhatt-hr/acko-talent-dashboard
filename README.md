@@ -31,4 +31,4 @@ All data in this prototype is **synthetic and illustrative** — no employee dat
 
 ## Context
 
-Built during my time at Acko (CHRO's Office) to support the rollout of TIF alongside our POD-based operating model redesign. This repo holds a sanitised, data-free version that demonstrates the visualisation approach.# acko-talent-dashboard
+Built during my time at Acko (CHRO's Office) to support the rollout of TIF alongside our POD-based operating model redesign. This repo holds a sanitised, data-free version that demonstrates the visualisation approach.
